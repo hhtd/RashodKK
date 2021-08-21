@@ -1,0 +1,163 @@
+
+import android.content.SharedPreferences;
+import android.os.Bundle;
+import android.view.Window;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import androidx.appcompat.app.AppCompatActivity;
+
+import java.util.Locale;
+
+public class MainActivity extends AppCompatActivity {
+
+    private EditText editVes, editSpeed, editRashodKK, editConcKK, editDryKK, editVSGlue,
+            editNSGlue, editVSWater, editNSWater;
+
+    private TextView Zagolovok, textViewVes, textViewSpeed, textViewInputRashod, textViewPerformance,
+            textPerformanceOutput, textViewConcKK, textViewDryKK, textViewAllGlue, textViewVSInput,
+            textViewNSInput, textViewAllWater, textViewVSInputWater, textViewNSInputWater, textViewAllGlueOut,
+            textViewVSGlueOut, textViewNSGlueOut, textViewAllWaterOut, textViewVSWaterOut, textViewNSWaterOut;
+
+    private Button button;
+
+    private SharedPreferences sPref;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        this.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        setContentView(R.layout.activity_main);
+
+        sPref = getPreferences(MODE_PRIVATE);
+
+        bind();
+
+        loadData();
+
+        button.setOnClickListener(view -> {
+            try{
+                calculate();
+                saveData();
+            }catch (Exception ignore){
+                Toast.makeText(this, "Заполнены не все поля", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void calculate(){
+
+        /*   производительность машины   */
+        float proizvodMachine = 4200f * 60f * textToFloat(editSpeed) * textToFloat(editVes) / 1000000000f;
+        setText(textPerformanceOutput,proizvodMachine);
+
+        /*   сухой крахмал   */
+        float KKDryInput = textToFloat(editRashodKK)/(textToFloat(editDryKK)/100f+1f);
+
+        /*   сухой крахмал в час   */
+        float KKDryHour = KKDryInput * proizvodMachine;
+
+        /*   Общий расход крахмала   */
+        float textAllGlueCalc =  KKDryHour  / (textToFloat(editConcKK) / 100f);
+        setText(textViewAllGlueOut,textAllGlueCalc);
+
+        /*   расход крахмала на В/С   */
+        float editGlueVSInputCalc =  (textAllGlueCalc * (textToFloat(editVSGlue)/100f));
+        setText(textViewVSGlueOut,editGlueVSInputCalc);
+
+        /*   расход крахмала на Н/С   */
+        float editGlueNSInputCalc =  (textAllGlueCalc * (textToFloat(editNSGlue)/100f));
+        setText(textViewNSGlueOut,editGlueNSInputCalc);
+
+        /*   общий расход воды   */
+        float textAllWaterCalc =  (KKDryHour / 0.01f);
+        setText(textViewAllWaterOut,textAllWaterCalc);
+
+        /*   расход вода на в/с   */
+        float textWaterVSResaltCalc = (textAllWaterCalc * (textToFloat(editVSWater) / 100f)) - editGlueVSInputCalc;
+        setText(textViewVSWaterOut,textWaterVSResaltCalc);
+
+        /*   расход воды на н/с   */
+        float textWaterNSResaltCalc = (textAllWaterCalc * (textToFloat(editNSWater) / 100f)) - editGlueNSInputCalc;
+        setText(textViewNSWaterOut,textWaterNSResaltCalc);
+    }
+
+    private float textToFloat(EditText editText){
+        return Float.parseFloat(editText.getText().toString());
+    }
+
+    private void setText(TextView textView, float value){
+        textView.setText(String.format(Locale.getDefault(),"%.1f", value));
+    }
+
+    private void setText(EditText editText, Object value){
+        editText.setText(value.toString());
+    }
+
+    private void putData(String key, EditText editText){
+        SharedPreferences.Editor ed = sPref.edit();   // - переход в редактирование , запрос на редактирование
+        ed.putString(key, editText.getText().toString()); // - устанавливаем  значения в реестр по ключу
+        ed.apply();
+    }
+
+    private void saveData(){
+        putData("editVes", editVes);
+        putData("editSpeed", editSpeed);
+        putData("editRashodKK", editRashodKK);
+        putData("editConcKK", editConcKK);
+        putData("editDryKK", editDryKK);
+        putData("editVSGlue", editVSGlue);
+        putData("editNSGlue", editNSGlue);
+        putData("editVSWater", editVSWater);
+        putData("editNSWater", editNSWater);
+    }
+
+    private void loadData(){
+        setText(editVes, sPref.getString("editVes", ""));
+        setText(editSpeed, sPref.getString("editSpeed", ""));
+        setText(editRashodKK, sPref.getString("editRashodKK", ""));
+        setText(editConcKK, sPref.getString("editConcKK", ""));
+        setText(editDryKK, sPref.getString("editDryKK", ""));
+        setText(editVSGlue, sPref.getString("editVSGlue", ""));
+        setText(editNSGlue, sPref.getString("editNSGlue", ""));
+        setText(editVSWater, sPref.getString("editVSWater", ""));
+        setText(editNSWater, sPref.getString("editNSWater", ""));
+    }
+
+    private void bind(){
+        editVes = findViewById(R.id.editVes);
+        editSpeed = findViewById(R.id.editSpeed);
+        editRashodKK = findViewById(R.id.editRashodKK);
+        editConcKK = findViewById(R.id.editConcKK);
+        editDryKK = findViewById(R.id.editDryKK);
+        editVSGlue = findViewById(R.id.editVSGlue);
+        editNSGlue = findViewById(R.id.editNSGlue);
+        editVSWater = findViewById(R.id.editVSWater);
+        editNSWater = findViewById(R.id.editNSWater);
+
+        Zagolovok = findViewById(R.id.Zagolovok);
+        textViewVes = findViewById(R.id.textViewVes);
+        textViewSpeed = findViewById(R.id.textViewSpeed);
+        textViewInputRashod = findViewById(R.id.textViewInputRashod);
+        textViewPerformance = findViewById(R.id.textViewPerformance);
+        textPerformanceOutput = findViewById(R.id.textPerformanceOutput);
+        textViewConcKK = findViewById(R.id.textViewConcKK);
+        textViewDryKK = findViewById(R.id.textViewDryKK);
+        textViewAllGlue = findViewById(R.id.textViewAllGlue);
+        textViewVSInput = findViewById(R.id.textViewVSInput);
+        textViewNSInput = findViewById(R.id.textViewNSInput);
+        textViewAllWater = findViewById(R.id.textViewAllWater);
+        textViewVSInputWater = findViewById(R.id.textViewVSInputWater);
+        textViewNSInputWater = findViewById(R.id.textViewNSInputWater);
+        textViewAllGlueOut = findViewById(R.id.textViewAllGlueOut);
+        textViewVSGlueOut = findViewById(R.id.textViewVSGlueOut);
+        textViewNSGlueOut = findViewById(R.id.textViewNSGlueOut);
+        textViewAllWaterOut = findViewById(R.id.textViewAllWaterOut);
+        textViewVSWaterOut = findViewById(R.id.textViewVSWaterOut);
+        textViewNSWaterOut = findViewById(R.id.textViewNSWaterOut);
+
+        button = findViewById(R.id.button);
+    }
+}
